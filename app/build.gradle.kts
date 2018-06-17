@@ -8,6 +8,7 @@ import org.gradle.kotlin.dsl.kotlin
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.version
 import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.Coroutines
 import org.jlleitschuh.gradle.ktlint.ReporterType
 
 plugins {
@@ -120,6 +121,10 @@ dependencies {
     implementation(Depends.Kotlin.stdlib)
     implementation(Depends.ktx)
 
+    implementation(Depends.Kotlin.Coroutines.jdk)
+    implementation(Depends.Kotlin.Coroutines.android)
+    implementation(Depends.Kotlin.Coroutines.rx2)
+
 //    //==================== Support Library ====================
     implementation(Depends.Support.support_v4)
     implementation(Depends.Support.appcompat_v7)
@@ -220,6 +225,10 @@ dependencies {
 
 repositories {
     mavenCentral()
+}
+
+kotlin {
+    experimental.coroutines = Coroutines.ENABLE
 }
 
 play {

@@ -1,6 +1,15 @@
 object Depends {
     object Kotlin {
         val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${Versions.kotlin}"
+
+        object Coroutines {
+            val jdk = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions
+                    .kotlinCoroutines}"
+            val android = "org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions
+                    .kotlinCoroutines}"
+            val rx2 = "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:${Versions
+                    .kotlinCoroutines}"
+        }
     }
 
     object Support {
@@ -15,7 +24,7 @@ object Depends {
         val preference_v7 = "com.android.support:preference-v7:${Versions.supportLibrary}"
         val preference_v14 = "com.android.support:preference-v14:${Versions.supportLibrary}"
     }
-    
+
     val ktx = "androidx.core:core-ktx:0.1"
 
     object OkHttp3 {
