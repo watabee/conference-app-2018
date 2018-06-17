@@ -1,43 +1,39 @@
 package io.github.droidkaigi.confsched2018.data.repository
 
-import android.support.annotation.CheckResult
 import io.github.droidkaigi.confsched2018.data.api.GithubApi
 import io.github.droidkaigi.confsched2018.data.db.ContributorDatabase
 import io.github.droidkaigi.confsched2018.data.db.entity.mapper.toContributors
-import io.github.droidkaigi.confsched2018.data.api.response.Contributor as ContributorResponse
 import io.github.droidkaigi.confsched2018.model.Contributor
 import io.github.droidkaigi.confsched2018.util.rx.SchedulerProvider
-import io.reactivex.Completable
 import io.reactivex.Flowable
-import io.reactivex.rxkotlin.zipWith
+import kotlinx.coroutines.experimental.rx2.asCoroutineDispatcher
+import kotlinx.coroutines.experimental.rx2.await
+import kotlinx.coroutines.experimental.withContext
 import timber.log.Timber
 import javax.inject.Inject
+import io.github.droidkaigi.confsched2018.data.api.response.Contributor as ContributorResponse
 
 class ContributorDataRepository @Inject constructor(
         private val api: GithubApi,
         private val contributorDatabase: ContributorDatabase,
         private val schedulerProvider: SchedulerProvider
 ) : ContributorRepository {
-    @CheckResult override fun loadContributors(): Completable {
+    override suspend fun loadContributors() {
         // We want to implement paging logic,
         // But The GitHub API does not return the total count of contributors in response data.
         // And we want to show total count.
         // So we fetch all contributors when first time.
-        return (1..MAX_PAGE).map { page ->
-            api.getContributors(OWNER, REPO, MAX_PER_PAGE, page)
-        }.reduce { acc, single ->
-                    acc.zipWith(
-                            single,
-                            { page1: List<ContributorResponse>, page2: List<ContributorResponse> ->
-                                page1 + page2
-                            }
-                    )
-                }.doOnSuccess {
-                    if (DEBUG) it.forEach { Timber.d("$it") }
-                    contributorDatabase.save(it)
-                }
-                .subscribeOn(schedulerProvider.io())
-                .toCompletable()
+        val result = (1..MAX_PAGE)
+                .map { page -> api.getContributors(OWNER, REPO, MAX_PER_PAGE, page) }
+                .map { withContext(schedulerProvider.io().asCoroutineDispatcher()) { it.await() } }
+                .reduce { acc, list -> acc + list }
+
+        if (DEBUG) {
+            result.forEach { Timber.d("$it") }
+        }
+        withContext(schedulerProvider.io().asCoroutineDispatcher()) {
+            contributorDatabase.save(result)
+        }
     }
 
     override val contributors: Flowable<List<Contributor>> =
